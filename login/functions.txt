@@ -1,0 +1,165 @@
+keys:
+
+public static HashMap<String,String> generateStringKey()
+
+---
+
+encrypt:
+
+KeyPair generateKeyPair()
+
+String  generateHash(String data, String password)
+
+boolean verifyHash(String data, String password, String hmac)
+
+String encryptString(String data, PublicKey publicKey)
+
+String decryptString(String encryptedData, PrivateKey privateKey)
+
+---
+
+db1:
+
+boolean findUser(String secretCode) - true if password doesnt exist, sc exists
+
+HashMap<String, Object> getUser(String secretCode)
+
+String updatePassword(String secretCode, String newPassword)
+
+String addUser(String secretCode, String username, String password)
+
+String updateUsername(String secretCode, String newUsername)
+
+String removeUser(String secretCode)
+
+closeMongoClient()
+
+
+ADMIN TO SET USER DETAILS
+                String secretcode = "";
+                System.out.print("Please enter first_name: ");
+                String Fname = scanner.nextLine();
+
+                System.out.print("Please enter last_name: ");
+                String Lname = scanner.nextLine();
+
+                System.out.print("Please enter email: ");
+                String email = scanner.nextLine();
+
+                System.out.print("Please enter phone: ");
+                String phone = scanner.nextLine();
+
+                HashMap<String,String> user = new HashMap<>();
+                user.put("first_name",Fname);
+                user.put("last_name",Lname);
+                user.put("username",username);
+                user.put("password",password);
+                user.put("email",email);
+                user.put("phone",phone);
+
+                String ab = db2.addNewUser(secretcode);
+                String bb =db2.setUserDetails(secretcode,user);
+                if (ab.equals("Success") && bb.equals("Success"))
+                    System.out.println("Your Details have been Set.");
+                else System.out.println("Error! ");
+
+------------------------
+db2:
+
+String addNewUser(String secretCode) 
+
+String setUserDetails(String secretCode, HashMap<String, String> userDetails)
+
+String storePublicKey(String secretCode, PublicKey publicKey)
+
+String storeHashID(String secretCode, String hmac)
+
+PublicKey getPublicKey(String secretCode)
+
+String getHash(String secretCode)
+
+String setVotedStatus(String secretCode, boolean voted)
+
+boolean getVotedStatus(String secretCode)
+
+
+
+------------------------
+db3
+
+String addElection(String electionName, String date, List<Document> candidates)
+
+List<Document> viewElections()
+
+Document createCandidate(String name, String party, String details)
+
+=== creating an election or viewing them
+
+        List<Document> elections = db3.getElectionByName("Presidential Election 2024");
+        elections=db3.viewElections();
+
+        System.out.println("Election Details:");
+        for (Document election : elections) {
+            for (String key : election.keySet()) {
+                if (key.equals("candidates")) {
+                    // Print candidates nicely
+                    List<Document> candidateList = (List<Document>) election.get(key);
+                    System.out.println(key + ":");
+                    for (Document candidate : candidateList) {
+                        System.out.println("  - Name: " + candidate.getString("name"));
+                        System.out.println("    Party: " + candidate.getString("party"));
+                        System.out.println("    Details: " + candidate.getString("details"));
+                    }
+                } else {
+                    System.out.println(key + ": " + election.get(key));
+                }
+            }
+            System.out.println();
+        }
+===
+------------------------------
+
+filemanager
+
+writeToFile(secretCode, privateKey);
+
+PrivateKey retrievedContent = readFromFile(secretCode);
+
+deleteAllFiles();
+
+
+
+--------------------------
+Blockchain
+
+Blockchain blockchain = new Blockchain();
+
+blockchain.addBlock("EncryptedVote1", "UserHashID1", "Signature1");
+blockchain.saveBlockchainToFile("privateKeys/blockchain.dat");
+blockchain.loadBlockchainFromFile("privateKeys/blockchain.dat");
+
+    for (VoteBlock block:blockchain.chain)    {
+            System.out.println(block.getVote());
+            }
+System.out.println(blockchain.isChainValid());
+
+
+Blockchain.loadBlockchainFromFile("privateKeys/blockchain.dat");
+for (VoteBlock block:Blockchain.chain)    {
+    System.out.println(block.getVote());
+}
+
+Blockchain.loadBlockchainFromFile("privateKeys/blockchain.dat");
+Blockchain.addBlock("EncryptedVote3", "UserHashID1", "Signature1");
+Blockchain.saveBlockchainToFile("privateKeys/blockchain.dat");
+
+bc init code -
+
+//Blockchain.saveBlockchainToFile("privateKeys/blockchain.dat");
+
+
+for tally = Blockchain.loadBlockchainFromFile("privateKeys/blockchain.dat");
+                    for (VoteBlock block:Blockchain.chain)    {
+                        if (block.getHashID().equalsIgnoreCase(hash))
+                            System.out.println(encrypt.decryptString(block.getVote(),filemanager.retrievedContent("ADMIN")));
+                    }
