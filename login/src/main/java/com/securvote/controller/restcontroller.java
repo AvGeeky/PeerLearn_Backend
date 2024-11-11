@@ -1,12 +1,14 @@
 package com.securvote.controller;
 
 import com.securvote.database.*;
+import com.securvote.login.Login;
 import com.securvote.registration.QPE;
 
 import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.util.*;
 
+import com.securvote.voting.Blockchain;
 import org.bson.Document;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -26,10 +28,13 @@ public class restcontroller {
     public static PublicKey admin_pubk;
     public static boolean authorised = false;
     public static String secretid;
-    char login; char mailcheck='.';
+    public static String hashid;
+    char login;
+    char mailcheck = '.';
 
     /**
      * Endpoint to set secret ID and determine the action.
+     *
      * @param id The secret ID to set.
      * @return ResponseEntity with status code based on existence in DB.
      * @throws QPE Custom exception for any errors.
@@ -41,18 +46,17 @@ public class restcontroller {
 
         if (mailcheck == 'F' || login != 'R' || mailcheck == '.') {
             Map<String, Object> errorResponse = new HashMap<>();
-            errorResponse.put("status", "error");
-            errorResponse.put("message", "Error1 updating Username or Password.");
+            errorResponse.put("status", "E");
+            errorResponse.put("message", "Error updating Username or Password. Mail check fail or Login mode not register mode.");
             return ResponseEntity.status(500).body(errorResponse);
         }
 
-        // Step 1: Update username and password in db1
         String usernameStatus = db1.updateUsername(secretid, username);
         String passwordStatus = db1.updatePassword(secretid, password);
 
         if (!"Success".equals(usernameStatus) || !"Success".equals(passwordStatus)) {
             Map<String, Object> errorResponse = new HashMap<>();
-            errorResponse.put("status", "error");
+            errorResponse.put("status", "E");
             errorResponse.put("message", "Error updating Username or Password.");
             return ResponseEntity.status(500).body(errorResponse);
         }
@@ -81,13 +85,13 @@ public class restcontroller {
 
         // Step 5: Save private key to a file
         filemanager.writeToFile(secretid, prik);
-
+        hashid = hash;
         // Display the generated hash ID to the user
         System.out.println("Your Hash ID is: " + hash + ". Please store it for future use.");
 
         // Create response data
         Map<String, Object> response = new HashMap<>();
-        response.put("status", "success");
+        response.put("status", "S");
         response.put("message", "Registration successful.");
         response.put("hashID", hash);
         response.put("username", username);
@@ -132,35 +136,41 @@ public class restcontroller {
      * @return ResponseEntity<String> Returns a success message if the email matches, otherwise an error message.
      * @throws QPE Custom exception for handling authentication errors.
      */
-
+//step one of registration
     @GetMapping("/api/setEmail")
     public ResponseEntity<HashMap<String, Object>> setEmail(@RequestParam String mail) throws QPE {
         System.out.println(mail + secretid);
         HashMap<String, String> users = db2.getUserDetails(secretid);
-        String email = mail;
-
-        // Create response map
         HashMap<String, Object> response = new HashMap<>();
+        String email = mail;
+        if (login!='R') {
+            response.put("status", "E");
+            response.put("message", "Registration is not the mode selected. ");
+            return ResponseEntity.ok(response); // FAILURE
+        }
+        // Create response map
+
 
         // If email doesn't match, authentication fails
         if (!email.equals(users.get("email"))) {
             System.out.println("Error! Authentication failed.");
             mailcheck = 'F';
-            response.put("status", "Email Auth Fail");
-            response.put("authStatus", "failed");
+            response.put("status", "E");
+            response.put("message", "failed email auth.");
             return ResponseEntity.ok(response); // Error
         }
 
         // If email matches, authentication is successful
         mailcheck = 'T';
-        response.put("status", "Email Auth Success");
-        response.put("authStatus", "success");
+        response.put("status", "S");
+        response.put("message", "mail auth success");
 
         return ResponseEntity.ok(response); // Success
     }
 
     /**
      * Endpoint to handle user login.
+     *
      * @param username The username provided by the user.
      * @param password The password provided by the user.
      * @return ResponseEntity with status code for success or failure.
@@ -177,7 +187,7 @@ public class restcontroller {
         // Check if user exists and username matches
         if (hsh == null || !hsh.get("username").equals(username)) {
             flag = 1;
-            response.put("status", "failed");
+            response.put("status", "E");
             response.put("message", "Invalid username");
             return ResponseEntity.status(401).body(response);
         }
@@ -185,7 +195,7 @@ public class restcontroller {
         // Check if the password matches
         if (!hsh.get("password").equals(password)) {
             flag = 1;
-            response.put("status", "failed");
+            response.put("status", "E");
             response.put("message", "Invalid password");
             return ResponseEntity.status(401).body(response);
         }
@@ -194,7 +204,7 @@ public class restcontroller {
         boolean hasVoted = db2.getVotedStatus(secretid);
         if (hasVoted) {
             flag = 1;
-            response.put("status", "failed");
+            response.put("status", "E");
             response.put("message", "User has already voted");
             throw new QPE("AV"); // User has already voted
         }
@@ -204,13 +214,14 @@ public class restcontroller {
             user_prik = filemanager.retrievedContent(secretid);
             admin_pubk = db2.getPublicKey("ADMIN");
             authorised = true;
+            hashid=db2.getHash(secretid);
 
-            response.put("status", "success");
+            response.put("status", "S");
             response.put("message", "Login successful");
             return ResponseEntity.ok(response);
         }
 
-        response.put("status", "failed");
+        response.put("status", "E");
         response.put("message", "Unknown error");
         return ResponseEntity.ok(response);
     }
@@ -219,7 +230,7 @@ public class restcontroller {
     public ResponseEntity<HashMap<String, String>> getUserDetails(@RequestParam String secretid) {
         // Simulate fetching user details from the database
         HashMap<String, String> userDetails = db2.getUserDetails(secretid);
-
+        userDetails.put("password","*******");
         // If user not found, return an error response
         if (userDetails == null) {
             return ResponseEntity.status(404).body(null); // Not Found
@@ -234,7 +245,9 @@ public class restcontroller {
     public ResponseEntity<List<Map<String, Object>>> getElections() {
         List<Document> elections = db3.viewElections();  // Fetch elections from DB
         List<Map<String, Object>> response = new ArrayList<>();
-
+        if (elections == null) {
+            return ResponseEntity.status(404).body(null); // Not Found
+        }
         for (Document election : elections) {
             Map<String, Object> electionData = electionToMap(election);
             response.add(electionData);
@@ -294,8 +307,43 @@ public class restcontroller {
         return candidateMap;
     }
 
+    @GetMapping("/api/castVote")
+    public ResponseEntity<HashMap<String, Object>> castVote(@RequestParam String vote) {
+        HashMap<String, Object> response = new HashMap<>();
+        System.out.println(vote);
+        if (!authorised){
+            response.put("status", "E");
+            response.put("message", "not logged in");
+            return ResponseEntity.ok(response);
+        }
+        try {
+            // Convert vote to uppercase to standardize
+            vote=vote.toUpperCase();
 
-    public static void main(String[] args) {
+            String encryptedVote = encrypt.encryptString(vote,admin_pubk);
+            String signature = encrypt.generateHash(secretid, db2.getUserDetails("ADMIN").get("password"));
+            System.out.println("Hi"+encryptedVote+signature);
+            String cnfm = db2.setVotedStatus(secretid, true);
+            if (cnfm.equalsIgnoreCase("Failure")) throw new QPE("error! TRY AGAIN.");
+
+            Blockchain.loadBlockchainFromFile("privateKeys/blockchain.dat");
+            Blockchain.addBlock(encryptedVote, hashid, signature);
+            Blockchain.saveBlockchainToFile("privateKeys/blockchain.dat");
+            // Prepare success response
+            response.put("status", "S");
+            response.put("message", "Your vote has been recorded successfully!");
+
+            System.out.println("Your vote has been recorded successfully! ");
+        } catch (Exception e) {
+            response.put("status", "E");
+            response.put("message", e.getMessage());
+            throw new RuntimeException(e);
+        }
+        return ResponseEntity.ok(response);
+    }
+
+
+        public static void main(String[] args) {
         SpringApplication.run(restcontroller.class, args);
     }
 }
