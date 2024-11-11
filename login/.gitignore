@@ -33,4 +33,4 @@ build/
 .vscode/
 
 ###ENVFILE###
-apiee.env
+.env
