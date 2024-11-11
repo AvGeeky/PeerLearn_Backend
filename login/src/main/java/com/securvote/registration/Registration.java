@@ -7,8 +7,6 @@ import java.security.PublicKey;
 import java.util.*;
 
 
-
-
 public class Registration {
     public static void main(String[] args) throws Exception {;
         {
@@ -68,8 +66,6 @@ public class Registration {
                 filemanager.writeToFile(secretcode,prik);
 
                 System.out.println("Registration Over!");
-
-
 
             }
             else throw new QPE("Error! Authentication failed."); //OUTPUT TEXT IF REGISTRATION DONE MORE THAN ONCE/ERROR

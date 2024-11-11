@@ -31,27 +31,7 @@ public class Voting {
             System.out.println();
             }
     }
-    public static void selectElection(String electionname){
-        List<Document> elections = db3.getElectionByName("Presidential Election 2024");
-        System.out.println("You have selected "+electionname);
-        for (Document election : elections) {
-            for (String key : election.keySet()) {
-                if (key.equals("candidates")) {
-                    // Print candidates nicely
-                    List<Document> candidateList = (List<Document>) election.get(key);
-                    System.out.println(key + ":");
-                    for (Document candidate : candidateList) {
-                        System.out.println("  - Name: " + candidate.getString("name"));
-                        System.out.println("    Party: " + candidate.getString("party"));
-                        System.out.println("    Details: " + candidate.getString("details"));
-                    }
-                } else {
-                    System.out.println(key + ": " + election.get(key));
-                }
-            }
-            System.out.println();
-        }
-    }
+
     public static void main(String[] args) throws Exception {
 
         Login.main(args);
