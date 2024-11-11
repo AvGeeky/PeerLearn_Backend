@@ -205,7 +205,8 @@ public class restcontroller {
             flag = 1;
             response.put("status", "E");
             response.put("message", "User has already voted");
-            throw new QPE("AV"); // User has already voted
+            return ResponseEntity.ok(response);
+
         }
 
         // Retrieve user's private key and admin's public key
@@ -336,7 +337,7 @@ public class restcontroller {
         } catch (Exception e) {
             response.put("status", "E");
             response.put("message", e.getMessage());
-            throw new RuntimeException(e);
+            return ResponseEntity.ok(response);
         }
         return ResponseEntity.ok(response);
     }

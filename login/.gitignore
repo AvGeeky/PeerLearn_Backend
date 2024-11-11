@@ -33,4 +33,4 @@ build/
 .vscode/
 
 ###ENVFILE###
-.env
+*.env
