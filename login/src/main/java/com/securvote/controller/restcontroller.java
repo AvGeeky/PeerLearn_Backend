@@ -1,7 +1,7 @@
 package com.securvote.controller;
 
 import com.securvote.database.*;
-import com.securvote.login.Login;
+
 import com.securvote.registration.QPE;
 
 import java.security.PrivateKey;
