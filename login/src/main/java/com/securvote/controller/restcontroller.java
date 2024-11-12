@@ -18,6 +18,9 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.CrossOrigin;
+
+@CrossOrigin(origins = "http://localhost:5173")
 
 @SpringBootApplication
 @RestController
@@ -205,8 +208,9 @@ public class restcontroller {
             flag = 1;
             response.put("status", "E");
             response.put("message", "User has already voted");
+            secretid="";
             return ResponseEntity.ok(response);
-
+            
         }
 
         // Retrieve user's private key and admin's public key
@@ -311,7 +315,7 @@ public class restcontroller {
     public ResponseEntity<HashMap<String, Object>> castVote(@RequestParam String vote) {
         HashMap<String, Object> response = new HashMap<>();
         System.out.println(vote);
-        if (!authorised){
+        if (!authorised || secretid==""){
             response.put("status", "E");
             response.put("message", "not logged in");
             return ResponseEntity.ok(response);
