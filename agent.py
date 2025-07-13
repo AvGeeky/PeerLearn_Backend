@@ -7,8 +7,8 @@ from dotenv import load_dotenv
 load_dotenv(dotenv_path=os.path.join(os.path.dirname(__file__), ".env"))
 
 def youtube_search(query:str,max_results:int=3):
-    api_key="AIzaSyAGvi5GGaF5f-UjfOM0S5DOYOg8PkBTOA4"
-    endpoint="https://www.googleapis.com/youtube/v3/search"
+    api_key="==="
+    endpoint="==="
     params=dict(
         key=api_key,
         q=query,
